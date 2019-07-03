@@ -12,5 +12,5 @@ void BasicTest()
 
 int main(int, char**)
 {
-  BasicTest();
+	std::cout << "Raven.ANPR Test Project, this should be run through CTest system and not directly..." << std::endl;
 }
