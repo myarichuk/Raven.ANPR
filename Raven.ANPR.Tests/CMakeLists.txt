@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.8)
 
-ENABLE_TESTING()
+cmake_policy(SET CMP0079 NEW) # allow linking from ANOTHER folder
 
-ADD_EXECUTABLE(unit_tests "tests.cpp" "tests.h")
-ADD_TEST(BasicTest unit_tests)
+include(BoostTestHelper.cmake)
+
+find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+
+add_boost_test(BasicTests.cpp ${CMAKE_CURRENT_BINARY_DIR}/../Raven.ANPR.Recognizer/Raven.ANPR.Recognizer.lib)
