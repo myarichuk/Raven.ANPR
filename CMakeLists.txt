@@ -6,8 +6,6 @@ cmake_minimum_required (VERSION 3.10)
 project (Raven.ANPR VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
-add_definitions(-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON)
-
 #library names for vcpkg to install
 set(PROJECT_DEPENDENCIES boost-core boost-test)
 
