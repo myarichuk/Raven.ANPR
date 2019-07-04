@@ -5,17 +5,24 @@ cmake_minimum_required (VERSION 3.10)
 
 project (Raven.ANPR VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+endif(MSVC)
 
 #library names for vcpkg to install
-set(PROJECT_DEPENDENCIES boost-core boost-test)
+set(PROJECT_DEPENDENCIES boost-core boost-test tesseract opencv[jpeg,png])
 
 #make sure to install and build vcpkg to enable them for the solution
 if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
 
+
 #first find proper path for vcpkg
   if(NOT DEFINED ENV{VCPKG_ROOT})
-	if(WIN32)
-	  set(VCPKG_ROOT $ENV{HOMEDRIVE}$ENV{HOMEPATH}/vcpkg)
+	if(WIN32)	
+	  set(VCPKG_ROOT $ENV{HOMEDRIVE}$ENV{HOMEPATH}vcpkg)
 	else()
 	  set(VCPKG_ROOT $ENV{HOME}/.vcpkg)
 	endif()
@@ -42,7 +49,6 @@ if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
   endif()
 
   #compile vcpkg if this is a fresh installation
-  #GTEST_ROOT
   if(WIN32)
 	set(BOOST_INCLUDEDIR ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include)
 	set(VCPKG_EXEC ${VCPKG_ROOT}/vcpkg.exe)
@@ -71,6 +77,11 @@ if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
 endif()
 
 enable_testing()
+
+#this is most likely due to a bug in vcpkg configuration, we need to set these manually...
+set(CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/share")
+set(CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
+set(CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
 
 # Include sub-projects.
 add_subdirectory ("Raven.ANPR.Recognizer")
