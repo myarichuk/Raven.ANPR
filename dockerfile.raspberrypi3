@@ -1,0 +1,27 @@
+FROM balenalib/raspberrypi3
+
+RUN apt-get update && apt-get install -y \
+	apt-transport-https \
+    build-essential \
+    gcc \
+	g++ \
+	cmake \
+	ninja-build \
+    curl \
+	sudo \
+	git \
+	pkg-config \
+	unzip \
+	tar \
+    make
+
+RUN useradd -m docker -s /bin/bash && echo "docker:docker" | chpasswd && usermod -aG sudo docker
+
+RUN mkdir /Raven.ANPR
+
+COPY Raven.ANPR.Recognizer /Raven.ANPR/Raven.ANPR.Recognizer
+COPY Raven.ANPR.Tests /Raven.ANPR/Raven.ANPR.Tests
+COPY CMakeLists.txt /Raven.ANPR/CMakeLists.txt
+
+USER docker
+CMD /bin/bash

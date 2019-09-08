@@ -1,19 +1,38 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# since we use vcpkg, make sure to include -DCMAKE_TOOLCHAIN_FILE=C:/Work/Raven.ANPR/Libs/vcpkg/scripts/buildsystems/vcpkg.cmake
-
-cmake_minimum_required (VERSION 3.10)
-
+﻿cmake_minimum_required (VERSION 3.13)
 project (Raven.ANPR VERSION 0.0.1 LANGUAGES CXX)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif(MSVC)
 
+if(NOT DEFINED ARCH)
+	if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+	  MESSAGE("+ 64 bit architecture") 
+	  set(ARCH "x64") 
+	 else() 
+	  MESSAGE("+ 32 bit architecture")  
+	  set(ARCH "x86") 
+	endif()
+endif() 
+
+if(WIN32)
+#this is most likely due to a bug in vcpkg configuration, we need to set these manually...
+	set(VCPKG_TARGET_TRIPLET "${ARCH}-windows")	
+elseif(UNIX)
+	set(VCPKG_TARGET_TRIPLET "${ARCH}-linux")
+elseif(APPLE)
+	set(VCPKG_TARGET_TRIPLET "${ARCH}-osx")
+else()
+#TODO: add arm triplets too, test the builds on arm dockers
+	message(FATAL_ERROR "Can compile only on Unix, Windows or MacOS operating systems.")
+endif()
+
 #library names for vcpkg to install
-set(PROJECT_DEPENDENCIES boost-core boost-test tesseract opencv[jpeg,png])
+set(PROJECT_DEPENDENCIES boost-core boost-test tesseract opencv[jpeg,png] curl)
 
 #make sure to install and build vcpkg to enable them for the solution
 if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
@@ -78,10 +97,25 @@ endif()
 
 enable_testing()
 
-#this is most likely due to a bug in vcpkg configuration, we need to set these manually...
-set(CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/share")
-set(CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
-set(CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+	message("++ This is a Debug build")
+	set (CMAKE_CONFIGURATION_TYPES, "Debug")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/manual-link")
+ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
+	message("++ This is a Release build")
+	set (CMAKE_CONFIGURATION_TYPES, "Release")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/manual-link")
+ELSE()
+	message("++ No build type specified, defaulting to release build")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
+	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/manual-link")
+	set (CMAKE_BUILD_TYPE "Release")
+ENDIF()
+
+list (APPEND CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/share")
+list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
 
 # Include sub-projects.
 add_subdirectory ("Raven.ANPR.Recognizer")
