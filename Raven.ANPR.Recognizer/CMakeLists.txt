@@ -16,7 +16,5 @@ set_target_properties(Raven.ANPR.Recognizer.Static PROPERTIES OUTPUT_NAME Raven.
 find_package(Tesseract CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include(fetch_cpp_client.cmake)
-
-target_include_directories(Raven.ANPR.Recognizer PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} .)
+target_include_directories(Raven.ANPR.Recognizer PRIVATE "${SOURCE_DIR}/Raven.CppClient" ${Tesseract_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} .)
 target_link_libraries(Raven.ANPR.Recognizer PRIVATE libtesseract ${OpenCV_LIBS})

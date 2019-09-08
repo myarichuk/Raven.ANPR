@@ -1,5 +1,9 @@
 ﻿#pragma once
 
-#include <iostream>
+#ifndef RAVEN_ANPR_RECOGNIZER_H
+#define RAVEN_ANPR_RECOGNIZER_H
 
-// TODO: Reference additional headers your program requires here.
+#include <iostream>
+#include <DocumentStore.h>
+
+#endif

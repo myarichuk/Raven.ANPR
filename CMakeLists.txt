@@ -113,11 +113,30 @@ ELSE()
 	list (APPEND CMAKE_LIBRARY_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/manual-link")
 	set (CMAKE_BUILD_TYPE "Release")
 ENDIF()
+ 
+include(ExternalProject)
+ExternalProject_Add(RavenDB.CppClient
+  PREFIX "${PROJECT_SOURCE_DIR}/libs/Raven.CppClient"
+  GIT_REPOSITORY https://github.com/myarichuk/ravendb-cpp-client.git
+  GIT_TAG        master
+  STEP_TARGETS   build
+  INSTALL_COMMAND ""  
+)
+
+ExternalProject_Get_property(RavenDB.CppClient BINARY_DIR)
+ExternalProject_Get_property(RavenDB.CppClient SOURCE_DIR)
+
+message("RavenDB.CppClient sources dir: ${SOURCE_DIR}")
+message("RavenDB.CppClient binaries dir: ${BINARY_DIR}")
+
+add_library(Raven.CppClient.Shared SHARED IMPORTED)
 
 list (APPEND CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/share")
+list (APPEND CMAKE_PREFIX_PATH "${BINARY_DIR}/RavenDB.CppClient")
 list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
+list (APPEND CMAKE_INCLUDE_PATH "${SOURCE_DIR}/Raven.CppClient")
 
-# Include sub-projects.
+# Include sub-projects
 add_subdirectory ("Raven.ANPR.Recognizer")
 add_subdirectory ("Raven.ANPR.Tests")
 
