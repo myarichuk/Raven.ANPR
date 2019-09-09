@@ -4,11 +4,11 @@ project (Raven.ANPR VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+ 
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif(MSVC)
-
+ 
 if(NOT DEFINED ARCH)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
 	  MESSAGE("+ 64 bit architecture") 
@@ -18,7 +18,7 @@ if(NOT DEFINED ARCH)
 	  set(ARCH "x86") 
 	endif()
 endif() 
-
+ 
 if(WIN32)
 #this is most likely due to a bug in vcpkg configuration, we need to set these manually...
 	set(VCPKG_TARGET_TRIPLET "${ARCH}-windows")	
@@ -32,11 +32,10 @@ else()
 endif()
 
 #library names for vcpkg to install
-set(PROJECT_DEPENDENCIES boost-core boost-test tesseract opencv[jpeg,png] curl)
+set(PROJECT_DEPENDENCIES boost-core boost-test tesseract opencv[jpeg,png] curl nlohmann-json)
 
 #make sure to install and build vcpkg to enable them for the solution
 if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
-
 
 #first find proper path for vcpkg
   if(NOT DEFINED ENV{VCPKG_ROOT})
@@ -88,7 +87,7 @@ if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
 
   #make sure to include third party stuff with CMake compilation
   set(CMAKE_TOOLCHAIN_FILE ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake CACHE STRING "")
-
+  
   message(STATUS "***** Checking project third party dependencies in ${VCPKG_ROOT} *****")
 
   #actually install vcpkg libraries
@@ -115,30 +114,35 @@ ELSE()
 ENDIF()
  
 include(ExternalProject)
-ExternalProject_Add(RavenDB.CppClient
+ExternalProject_Add(RavenDBCppClient
   PREFIX "${PROJECT_SOURCE_DIR}/libs/Raven.CppClient"
   GIT_REPOSITORY https://github.com/myarichuk/ravendb-cpp-client.git
   GIT_TAG        master
   STEP_TARGETS   build
   INSTALL_COMMAND ""  
 )
-
-ExternalProject_Get_property(RavenDB.CppClient BINARY_DIR)
-ExternalProject_Get_property(RavenDB.CppClient SOURCE_DIR)
+ 
+ExternalProject_Get_property(RavenDBCppClient BINARY_DIR)
+ExternalProject_Get_property(RavenDBCppClient SOURCE_DIR)
 
 message("RavenDB.CppClient sources dir: ${SOURCE_DIR}")
 message("RavenDB.CppClient binaries dir: ${BINARY_DIR}")
 
-add_library(Raven.CppClient.Shared SHARED IMPORTED)
+set(CLIENT_SOURCE_DIR ${SOURCE_DIR} CACHE STRING "")
 
 list (APPEND CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/share")
-list (APPEND CMAKE_PREFIX_PATH "${BINARY_DIR}/RavenDB.CppClient")
+list (APPEND CMAKE_PREFIX_PATH "${BINARY_DIR}/Raven.CppClient")
 list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
+list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include/nlohmann")
 list (APPEND CMAKE_INCLUDE_PATH "${SOURCE_DIR}/Raven.CppClient")
+
+message("CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 # Include sub-projects
 add_subdirectory ("Raven.ANPR.Recognizer")
-add_subdirectory ("Raven.ANPR.Tests")
+add_subdirectory ("Raven.ANPR.Tests") 
+
+add_dependencies(Raven.ANPR.Recognizer RavenDBCppClient)
 
 #message("Setting Boost include directories to '${Boost_INCLUDE_DIR}'")
 #include_directories(${Boost_INCLUDE_DIR})

@@ -6,4 +6,18 @@
 #include <iostream>
 #include <DocumentStore.h>
 
+using namespace ravendb::client;
+
+namespace ravendb::recognizer
+{
+
+class PlateRecognizer
+{
+private:
+
+public:
+};
+
+}
+
 #endif
