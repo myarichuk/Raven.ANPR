@@ -6,9 +6,9 @@ function(add_boost_test SOURCE_FILE_NAME DEPENDENCY_LIB)
 
 	add_executable(${TEST_EXECUTABLE_NAME} ${SOURCE_FILE_NAME})
 	target_link_libraries(${TEST_EXECUTABLE_NAME} 
-						  ${DEPENDENCY_LIB} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+						  ${DEPENDENCY_LIB} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${OpenCV_LIBS})
 					  
-	target_include_directories(${TEST_EXECUTABLE_NAME} PUBLIC ${Boost_INCLUDE_DIR})
+	target_include_directories(${TEST_EXECUTABLE_NAME} PUBLIC ${Boost_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 
 	file(READ "${SOURCE_FILE_NAME}" SOURCE_FILE_CONTENTS)
 

@@ -127,6 +127,7 @@ ExternalProject_Add(RavenDBCppClient
   GIT_REPOSITORY https://github.com/myarichuk/ravendb-cpp-client.git
   GIT_TAG        master
   STEP_TARGETS   build
+  UPDATE_COMMAND "" 
   INSTALL_COMMAND ""  
 )
  
@@ -145,6 +146,7 @@ list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}
 list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include/nlohmann")
 list (APPEND CMAKE_INCLUDE_PATH "${SOURCE_DIR}/Raven.CppClient")
 list (APPEND CMAKE_INCLUDE_PATH "${Boost_INCLUDE_DIR}")
+list (APPEND CMAKE_LIBRARY_PATH "${BINARY_DIR}/Raven.CppClient")
 
 link_directories(${CMAKE_LIBRARY_PATH})
 include_directories(${CMAKE_INCLUDE_PATH})
