@@ -16,9 +16,8 @@ struct F {
 BOOST_FIXTURE_TEST_SUITE(s, F)
 
   BOOST_AUTO_TEST_CASE(test_case1)
-  {
-	
-	BOOST_TEST(i == 0);
+  {		
+	BOOST_TEST(i != 0);
   }
 
   BOOST_AUTO_TEST_CASE(test_case2)
