@@ -1,5 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.13)
-project (Raven.ANPR VERSION 0.0.1 LANGUAGES CXX)
+project (Raven.ANPR VERSION 0.0.1 LANGUAGES C CXX)
+include (CTest)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +12,8 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")	
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif(MSVC)
+
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
  
 if(NOT DEFINED ARCH)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
@@ -24,7 +27,7 @@ endif()
   
 if(WIN32)
 #this is most likely due to a bug in vcpkg configuration, we need to set these manually...
-	set(VCPKG_TARGET_TRIPLET "${ARCH}-windows")	
+	set(VCPKG_TARGET_TRIPLET "${ARCH}-windows-static")	
 elseif(UNIX)
 	set(VCPKG_TARGET_TRIPLET "${ARCH}-linux")
 elseif(APPLE)
@@ -68,7 +71,7 @@ if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
   if(NOT EXISTS ${VCPKG_ROOT}/README.md)
 	message(FATAL_ERROR "***** FATAL ERROR: Could not clone vcpkg, make sure git is installed and configured properly *****")
   endif()
-
+   
   #compile vcpkg if this is a fresh installation
   if(WIN32)
 	set(BOOST_INCLUDEDIR ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include)
@@ -78,7 +81,7 @@ if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
 	set(VCPKG_EXEC ${VCPKG_ROOT}/vcpkg)
 	set(VCPKG_BOOTSTRAP ${VCPKG_ROOT}/bootstrap-vcpkg.sh)
   endif()
-
+   
   if(NOT EXISTS ${VCPKG_EXEC})
 	message("Bootstrapping vcpkg in ${VCPKG_ROOT}")
 	execute_process(COMMAND ${VCPKG_BOOTSTRAP} WORKING_DIRECTORY ${VCPKG_ROOT})
@@ -145,6 +148,7 @@ list (APPEND CMAKE_PREFIX_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/
 list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
 list (APPEND CMAKE_INCLUDE_PATH "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include/nlohmann")
 list (APPEND CMAKE_INCLUDE_PATH "${SOURCE_DIR}/Raven.CppClient")
+list (APPEND CMAKE_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/Raven.ANPR.Recognizer")
 list (APPEND CMAKE_INCLUDE_PATH "${Boost_INCLUDE_DIR}")
 list (APPEND CMAKE_LIBRARY_PATH "${BINARY_DIR}/Raven.CppClient")
 

@@ -11,3 +11,7 @@ find_package(OpenCV REQUIRED CONFIG)
 foreach(_file ${TEST_FIXTURES})
 	add_boost_test(${_file} Raven.ANPR.Recognizer Raven.CppClient)
 endforeach()
+ 
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
