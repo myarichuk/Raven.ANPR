@@ -19,7 +19,7 @@ if(NOT DEFINED ARCH)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
 	  MESSAGE("+ 64 bit architecture") 
 	  set(ARCH "x64") 
-	 else()
+	 else() 
 	  MESSAGE("+ 32 bit architecture")  
 	  set(ARCH "x86") 
 	endif()
@@ -38,7 +38,7 @@ else()
 endif()
 
 #library names for vcpkg to install
-set(PROJECT_DEPENDENCIES boost-core boost-test tesseract leptonica opencv[jpeg,png] nlohmann-json curl)
+set(PROJECT_DEPENDENCIES boost-core boost-test tesseract leptonica opencv[contrib] opencv[png] opencv[jpeg] nlohmann-json curl)
 
 #make sure to install and build vcpkg to enable them for the solution
 if(NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
