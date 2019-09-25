@@ -21,7 +21,28 @@ add_custom_command(
 
 add_custom_command(
 			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate2.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
+
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate3.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
+
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate4.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
+
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate5.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
+
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate_invalid.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
+
+			
+add_custom_command(
+			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Raven.ANPR.Tests/test_license_plate_missing.jpg ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_DIR_NAME})
 
 add_custom_command(
 			TARGET ${TEST_EXECUTABLE_TARGET} POST_BUILD
