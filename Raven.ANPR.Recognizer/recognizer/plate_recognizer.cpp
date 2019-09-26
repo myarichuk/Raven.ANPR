@@ -47,11 +47,49 @@ bool plate_recognizer::try_parse(
 	int confidence_threshold)
 {
 	throw_if_invalid(image);
-	
+
+	const auto value_exists = [](const std::string& val, std::multimap<int, std::string, std::greater<int>>& dict)
+	{
+		for(const auto& entry : dict)
+			if(entry.second == val)
+				return true;
+
+		return false;
+	};
+
 	
 	for(auto& strategy : plate_finders)
 	{
 		std::vector<cv::Mat> plate_candidates;
+
+#ifdef _DEBUG
+		int strategy_index = 0;
+		if(strategy->try_find_and_crop_plate_number(image, plate_candidates))			
+		{
+			int candidate_index = 0;
+			for(auto& plate_image : plate_candidates)
+			{
+				std::string plate_number_as_text;
+				int confidence;
+
+				std::ostringstream filename_stream;
+			    filename_stream << "plate_candidate_" << strategy_index << "_" << candidate_index++ << ".png";
+
+				cv::imwrite(filename_stream.str(), plate_image);
+				if(try_execute_ocr(plate_image, plate_number_as_text, confidence) && confidence >= confidence_threshold)
+				{
+					if(!value_exists(plate_number_as_text, parsed_numbers_by_confidence))
+						parsed_numbers_by_confidence.insert(std::make_pair(confidence, plate_number_as_text));
+				}
+
+				plate_number_as_text = "";
+				confidence = 0;
+			}
+			strategy_index++;
+			if(!parsed_numbers_by_confidence.empty())
+				return true;
+		}
+#else
 		if(strategy->try_find_and_crop_plate_number(image, plate_candidates))			
 		{
 			for(auto& plate_image : plate_candidates)
@@ -70,6 +108,7 @@ bool plate_recognizer::try_parse(
 			if(!parsed_numbers_by_confidence.empty())
 				return true;
 		}
+#endif
 	}
 
 	return false;

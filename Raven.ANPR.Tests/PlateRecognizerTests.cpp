@@ -72,6 +72,14 @@ BOOST_AUTO_TEST_CASE(can_recognize_plate5)
 	BOOST_CHECK_EQUAL(license_number, "OMG77");
 }
 
+BOOST_AUTO_TEST_CASE(can_recognize_missing_plate)
+{
+	std::multimap<int, std::string, std::greater<int>> results;
+	BOOST_CHECK_EQUAL(false, recognizer->try_parse("test_license_plate_missing.jpg", results));
+	BOOST_CHECK(results.empty());
+}
+
+
 BOOST_AUTO_TEST_CASE(should_throw_if_image_invalid)
 {
 	std::string license_number;

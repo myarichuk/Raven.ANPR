@@ -7,6 +7,7 @@
 #include <corecrt_math_defines.h>
 #include "possible_plate.hpp"
 
+//credit: code adapted with some changes from https://github.com/Link009/LPEX 
 class plate_finder_by_geometry : public base_plate_finder_strategy
 {
 private:
@@ -34,9 +35,9 @@ private:
 			//if this can be a match, add to result list
 			if(distance < possible_c.diagonal_size() * 5 &&
 				angle < 10.0 &&
-				change_in_area < 0.45 &&
-				change_in_width < 0.45 &&
-				change_in_height < 0.1)
+				change_in_area < 0.4 &&
+				change_in_width < 0.4 &&
+				change_in_height < 0.095)
 			{
 				matching_chars.push_back(possible_matching_char);
 			}
@@ -45,15 +46,11 @@ private:
 
 public:
 	plate_finder_by_geometry() = default;
-
-
-	plate_finder_by_geometry(const plate_finder_by_geometry& other)
-		: base_plate_finder_strategy(other)
-	{
-	}
+	
+	plate_finder_by_geometry(const plate_finder_by_geometry& other) = default;
 
 	plate_finder_by_geometry(plate_finder_by_geometry&& other) noexcept
-		: base_plate_finder_strategy(std::move(other))
+		: base_plate_finder_strategy(other)
 	{
 	}
 
@@ -154,7 +151,7 @@ public:
 			const auto rotation_matrix = cv::getRotationMatrix2D(plate.center, plate.angle, 1.0);
 
 			cv::Mat rotated;
-			cv::warpAffine(gray, rotated, rotation_matrix, cv::Size(gray.rows, gray.cols));
+			cv::warpAffine(image, rotated, rotation_matrix, cv::Size(gray.rows, gray.cols));
 
 			cv::Mat cropped;
 			//crop the image to suspected license plate boundaries
