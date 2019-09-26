@@ -19,6 +19,7 @@ struct possible_plate
 		std::vector<if_char> maybe_chars;
 
 		maybe_chars.reserve(contours.size());
+
 		for(auto& c : contours)
 			maybe_chars.emplace_back(c);
 
@@ -29,20 +30,20 @@ struct possible_plate
 
 		const auto first_char = maybe_chars[0];
 		const auto last_char = maybe_chars[maybe_chars.size() - 1];
+
 		center = cv::Point2f((first_char.center_x() + last_char.center_x()) / 2.0,
 		                                (first_char.center_y() + last_char.center_y()) / 2.0);
 
-		width = int((last_char.boundingRect.x + last_char.boundingRect.width - first_char.boundingRect.x) * 1.3);
+		width = int((last_char.bounding_rect.x + last_char.bounding_rect.width - first_char.bounding_rect.x) * 1.3);
 
 		auto total_char_heights = 0;
 		for(auto& matching_char : maybe_chars)
-			total_char_heights += matching_char.boundingRect.height;
+			total_char_heights += matching_char.bounding_rect.height;
 
 		const auto average_char_height = total_char_heights / maybe_chars.size();
 
 		height = int(average_char_height * 1.5);
 
-		//calculate correction angle of plate region
 		const auto opposite = last_char.center_y() - first_char.center_y();
 		const auto hypotenuse = first_char.distance_to(last_char);
 		angle = asin(opposite / hypotenuse) * (180.0 / M_PI);

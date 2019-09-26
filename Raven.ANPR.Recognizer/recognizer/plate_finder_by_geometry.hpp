@@ -8,7 +8,7 @@
 #include "possible_plate.hpp"
 
 //credit: code adapted with some changes from https://github.com/Link009/LPEX 
-class plate_finder_by_geometry : public base_plate_finder_strategy
+class plate_finder_by_geometry final : public base_plate_finder_strategy
 {
 private:
 	static void find_matching_chars(
@@ -25,12 +25,12 @@ private:
 			const auto angle = possible_c.angle_to(possible_matching_char);
 			
 			const auto bounding_rect = cv::boundingRect(possible_matching_char);
-			const auto change_in_area = float(abs(bounding_rect.area() - possible_c.boundingRect.area())) /
-										float(possible_c.boundingRect.area());
-			const auto change_in_width = float(abs(bounding_rect.width - possible_c.boundingRect.width)) /
-										float(possible_c.boundingRect.width);
-			const auto change_in_height = float(abs(bounding_rect.height - possible_c.boundingRect.height)) /
-										float(possible_c.boundingRect.height);
+			const auto change_in_area = float(abs(bounding_rect.area() - possible_c.bounding_rect.area())) /
+										float(possible_c.bounding_rect.area());
+			const auto change_in_width = float(abs(bounding_rect.width - possible_c.bounding_rect.width)) /
+										float(possible_c.bounding_rect.width);
+			const auto change_in_height = float(abs(bounding_rect.height - possible_c.bounding_rect.height)) /
+										float(possible_c.bounding_rect.height);
 
 			//if this can be a match, add to result list
 			if(distance < possible_c.diagonal_size() * 5 &&
@@ -70,11 +70,12 @@ public:
 		return *this;
 	}
 
-	bool try_find_and_crop_plate_number(const cv::Mat& image, std::vector<cv::Mat>& results) override
+	//do image manipulations that are needed to find better, more complete contours of shapes on the image
+	void prepare_image_and_find_edges(const cv::Mat& image, std::vector<std::vector<cv::Point>>& contours) const
 	{
 		cv::Mat gray;
 
-		//convert to grayscale
+		//convert to grayscale so there will be less variation in image to deal with
 		cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
 		const auto kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Point(3, 3));
@@ -97,76 +98,125 @@ public:
 		cv::Mat thresh;
 		cv::adaptiveThreshold(blur, thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 19, 9);
 
-		std::vector<std::vector<cv::Point>> contours;
 		std::vector<cv::Vec4i> hierarchy;
 		cv::findContours(thresh, contours, hierarchy, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+	}
 
-		cv::Mat imageContours = cv::Mat::zeros(cv::Size(thresh.rows, thresh.cols), 0);
-		std::vector<std::vector<cv::Point>> possible_chars;
+	//iterate through all found contours and 
+	//eliminate all those where shapes are too far from each others or not align properly
+	//(for example, if several shapes are too far off or if the bounding shape is in incorrect aspect ratio,
+	//this means we want to ignore those shapes as they are unlikely form a license plate)
+	static void eliminate_irrelevant_contours_first_pass(
+		const cv::Mat& image, 
+		const std::vector<std::vector<cv::Point>>& contours, 
+		std::vector<std::vector<cv::Point>>& possible_chars)
+	{
 		int count_of_possible_chars = 0;
 
 		int i = 0;
 
 		//do a rough check on a contour to see if it could be a char
-		auto check_if_char = [](const if_char& maybe_char)
+		const auto check_if_char = [](const if_char& maybe_char)
 		{
-			return maybe_char.boundingRect.area() > 80 &&
-				   maybe_char.boundingRect.width > 2 &&
-				   maybe_char.boundingRect.height > 8 &&
-				   (0.25 < maybe_char.aspect_ratio() < 1.05);
+			return maybe_char.bounding_rect.area() > 80 &&
+				maybe_char.bounding_rect.width > 2 &&
+				maybe_char.bounding_rect.height > 8 &&
+				(0.25 < maybe_char.aspect_ratio() < 1.05);
 		};
 
-		for(auto& c : contours)
+		for(const auto& contour : contours)
 		{
-			cv::drawContours(imageContours, contours, i++, cv::Scalar(255,255,255));
-			auto maybe_char = if_char(c);
-			if(check_if_char(maybe_char))
+			auto maybe_char = if_char(contour);
+			
+			//if the character passes the heuristic checks we save it for next phase
+			if(check_if_char(maybe_char)) 
 			{
 				count_of_possible_chars ++;
 				possible_chars.push_back(maybe_char);
 			}
 		}
+	}
 
-		std::vector<std::vector<std::vector<cv::Point>>> list_of_list_of_matching_chars;
-		for(auto& possible_c : possible_chars)
+	//group shapes into sequences by using geometrical differences as thresholds as heuristics
+	//meaning: for each suspected character contour, find all others that are close geometrically to it (distance, angle)
+	static void group_contours_to_sequences_second_pass(
+		const std::vector<std::vector<cv::Point>>& possible_chars, 
+		std::vector<std::vector<std::vector<cv::Point>>>& list_of_list_of_matching_chars)
+	{
+		for(const auto& possible_c : possible_chars)
 		{		
 			std::vector<std::vector<cv::Point>> list_of_matching_chars;
+
+			//do the "cross product" comparisons of 'possible_c' with all other contours to find the sequence of all those
+			//that are close to it
 			find_matching_chars(possible_c, possible_chars, list_of_matching_chars);
+
 			list_of_matching_chars.push_back(possible_c);
 
-			if(list_of_matching_chars.size() < 3) //not enough characters for a license plate
+			//in this case ignore because there is not enough characters for a license plate
+			//TODO: make this configurable? I think more than 3 characters in license plate makes sense, but who knows...
+			if(list_of_matching_chars.size() < 3) 
 				continue;
 
 			list_of_list_of_matching_chars.push_back(list_of_matching_chars);
 		}
+	}
 
-		if(list_of_list_of_matching_chars.empty())
+	static void crop_plate_candidate(
+		const cv::Mat& image, 
+		const std::vector<std::vector<std::vector<cv::Point>>>::value_type& list_of_matching_chars, 
+		cv::Mat& cropped)
+	{
+		//do some calculations about the supposed position of the license plate, based on location of its characters
+		const possible_plate plate(list_of_matching_chars);
+
+		//Calculate how much we should rotate the cropped image. This increases the likelihood of OCR to give accurate results
+		const auto rotation_matrix = cv::getRotationMatrix2D(plate.center, plate.angle, 1.0);
+
+		cv::Mat rotated;
+		//actually rotate the image
+		cv::warpAffine(image, rotated, rotation_matrix, cv::Size(image.rows, image.cols));
+
+		//crop the image to suspected license plate boundaries
+		//also crop 15% at the edges to reduce visual artifacts that sometimes happen after warpAffine 
+		//- those can cause turn artifacts and false positives in OCR
+		const auto cropped_size = cv::Size(plate.width * 0.85, plate.height * 0.85);
+		cv::getRectSubPix(rotated, cropped_size, plate.center, cropped);
+	}
+
+	bool try_find_and_crop_plate_number(const cv::Mat& image, std::vector<cv::Mat>& results) override
+	{
+		std::vector<std::vector<cv::Point>> contours;
+		prepare_image_and_find_edges(image, contours);
+
+		std::vector<std::vector<cv::Point>> possible_chars;
+		eliminate_irrelevant_contours_first_pass(image, contours, possible_chars);
+
+		std::vector<std::vector<std::vector<cv::Point>>> list_of_list_of_matching_chars;
+		group_contours_to_sequences_second_pass(possible_chars, list_of_list_of_matching_chars);
+
+		//obviously, if we didn't find sequences in second pass, we have nothing to do
+		if(list_of_list_of_matching_chars.empty()) 
 			return false;
 
-		std::vector<possible_plate> detected_plates;
-		for(auto& list_of_matching_chars : list_of_list_of_matching_chars)
+		for(const auto& list_of_matching_chars : list_of_list_of_matching_chars)
 		{
-			possible_plate plate(list_of_matching_chars);
+			cv::Mat result;
+			//now that we have sequences of shapes that *could* represent license plate,
+			//we crop original image to include those sequences and treat them as candidates for license plates.
+			crop_plate_candidate(image, list_of_matching_chars, result);
 
-			const auto rotation_matrix = cv::getRotationMatrix2D(plate.center, plate.angle, 1.0);
-
-			cv::Mat rotated;
-			cv::warpAffine(image, rotated, rotation_matrix, cv::Size(gray.rows, gray.cols));
-
-			cv::Mat cropped;
-			//crop the image to suspected license plate boundaries
-			//also crop 15% at the edges to reduce visual artifacts that can cause in turn artifacts in OCR
-			auto cropped_size = cv::Size(plate.width * 0.85, plate.height * 0.85);
-			cv::getRectSubPix(rotated, cropped_size, plate.center, cropped);
-
-			if(cropped.data == nullptr ||
-				cropped.rows == 0 ||
-				cropped.cols == 0)
+			//just in case, this shouldn't be true
+			if(result.data == nullptr ||
+				result.rows == 0 ||
+				result.cols == 0)
 				continue;
 			
-			cv::cvtColor(cropped, cropped, cv::COLOR_BGR2RGBA); //without this Tesseract will fail it's OCR
+			//adjust color palette so tesseract OCR will have less issues
+			//(without this, the possibility of false positives is MUCH higher)
+			cv::cvtColor(result, result, cv::COLOR_BGR2RGBA); //without this Tesseract will fail it's OCR
 
-			results.push_back(cropped);
+			results.push_back(result);
 		}
 		
 		return !results.empty();

@@ -17,6 +17,8 @@ bool plate_recognizer::try_execute_ocr(cv::Mat& plate_image, std::string& result
 	if(tmp.empty())
 		return false;
 
+	//remove whitespaces and irrelevant characters from detected plate number
+	//this will mitigate somewhat OCR detecting garbage in case of visual artifacts (after license plate detection)
 	const std::regex allowed_chars("[A-Za-z0-9]");
 	result.reserve(tmp.size());
 
@@ -48,15 +50,16 @@ bool plate_recognizer::try_parse(
 {
 	throw_if_invalid(image);
 
-	const auto value_exists = [](const std::string& val, std::multimap<int, std::string, std::greater<int>>& dict)
-	{
-		for(const auto& entry : dict)
-			if(entry.second == val)
-				return true;
-
-		return false;
-	};
-
+	const auto value_exists = 
+		[](const int confidence, 
+		   const std::string& val, 
+		   std::multimap<int, std::string, std::greater<int>>& dict)
+		{
+			for(const auto& entry : dict)
+				if(entry.second == val && entry.first >= confidence)
+					return true;
+			return false;
+		};
 	
 	for(auto& strategy : plate_finders)
 	{
@@ -65,11 +68,15 @@ bool plate_recognizer::try_parse(
 #ifdef PRINTF_DEBUG
 		int strategy_index = 0;
 #endif
+		//try to detect possible license plates, then forward them to tesseract for OCR-ing
+		//multiple license plate detection can be used to increase the chance of detecting something useful
+		//in the end, the results will be sorted by OCR confidence score (0-100 where 100 means the highest confidence)
 		if(strategy->try_find_and_crop_plate_number(image, plate_candidates))			
 		{
 #ifdef PRINTF_DEBUG
 			int candidate_index = 0;
 #endif
+			//for each detected plate try to apply OCR on them
 			for(auto& plate_image : plate_candidates)
 			{
 				std::string plate_number_as_text;
@@ -82,7 +89,7 @@ bool plate_recognizer::try_parse(
 #endif
 				if(try_execute_ocr(plate_image, plate_number_as_text, confidence) && confidence >= confidence_threshold)
 				{
-					if(!value_exists(plate_number_as_text, parsed_numbers_by_confidence))
+					if(!value_exists(confidence, plate_number_as_text, parsed_numbers_by_confidence))
 						parsed_numbers_by_confidence.insert(std::make_pair(confidence, plate_number_as_text));
 				}
 
@@ -92,12 +99,10 @@ bool plate_recognizer::try_parse(
 #ifdef PRINTF_DEBUG
 			strategy_index++;
 #endif
-			if(!parsed_numbers_by_confidence.empty())
-				return true;
 		}
 	}
 
-	return false;
+	return !parsed_numbers_by_confidence.empty();
 }
 
 plate_recognizer::plate_recognizer(): plate_recognizer(std::vector<std::shared_ptr<base_plate_finder_strategy>>())

@@ -8,16 +8,16 @@
 
 struct if_char
 {
-	std::vector<cv::Point> cntr;
-	cv::Rect boundingRect;
+	std::vector<cv::Point> contour;
+	cv::Rect bounding_rect;
 
-	double center_x() const { return static_cast<double>(long(boundingRect.x) + long(boundingRect.x) + long(boundingRect.width)) / 2.0; }
-	double center_y() const { return static_cast<double>(long(boundingRect.y) + long(boundingRect.y) + long(boundingRect.height)) / 2.0; }
+	double center_x() const { return static_cast<double>(bounding_rect.x + bounding_rect.x + bounding_rect.width) / 2.0; }
+	double center_y() const { return static_cast<double>(bounding_rect.y + bounding_rect.y + bounding_rect.height) / 2.0; }
 
-	double diagonal_size() const { return sqrt(pow(boundingRect.width, 2) + pow(boundingRect.height, 2)); }
-	double aspect_ratio() const { return static_cast<float>(boundingRect.width) / static_cast<float>(boundingRect.height); }
+	double diagonal_size() const { return sqrt(pow(bounding_rect.width, 2) + pow(bounding_rect.height, 2)); }
+	double aspect_ratio() const { return static_cast<float>(bounding_rect.width) / static_cast<float>(bounding_rect.height); }
 
-	operator std::vector<cv::Point>() const { return cntr; }
+	operator std::vector<cv::Point>() const { return contour; }
 
 	double angle_to(const if_char& other) const
 	{
@@ -33,7 +33,7 @@ struct if_char
 		return sqrt(pow(x,2) + pow(y,2));
 	}
 
-	friend bool operator==(const if_char& lhs, const if_char& rhs) { return lhs.cntr == rhs.cntr; }
+	friend bool operator==(const if_char& lhs, const if_char& rhs) { return lhs.contour == rhs.contour; }
 	friend bool operator!=(const if_char& lhs, const if_char& rhs) { return !(lhs == rhs); }
 
 	if_char() = default;
@@ -41,9 +41,9 @@ struct if_char
 	//since this is not defined as 'explicit', this converts the 'vector<Point>' to 'if_char'
 	//just like implicit operator converters work in C#
 	if_char(const std::vector<cv::Point>& contour) 
-		: cntr(contour)
+		: contour(contour)
 	{
-		boundingRect = cv::boundingRect(cntr);
+		bounding_rect = cv::boundingRect(contour);
 	}
 
 	if_char(const if_char& other) = default;
