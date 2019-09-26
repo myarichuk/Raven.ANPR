@@ -135,6 +135,9 @@ plate_recognizer::~plate_recognizer()
 plate_recognizer::plate_recognizer(const std::vector<std::shared_ptr<base_plate_finder_strategy>>& plate_finder_strategies)
 	: plate_finders(plate_finder_strategies)
 {
+	//note: tesseract requires data directory for it to work properly where the executable works
+	//by default, the directory is 'tessdata' and it should contain files like 'eng.traineddata' per each language that is used with it.
+	//without the directory and some training files, tesseract api will fail to initialize
 	if (ocr_api.Init(nullptr, "eng") == -1)
 	{
 		throw std::exception("Failed to initialize tesseract");
