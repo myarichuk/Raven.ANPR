@@ -62,20 +62,24 @@ bool plate_recognizer::try_parse(
 	{
 		std::vector<cv::Mat> plate_candidates;
 
-#ifdef _DEBUG
+#ifdef PRINTF_DEBUG
 		int strategy_index = 0;
+#endif
 		if(strategy->try_find_and_crop_plate_number(image, plate_candidates))			
 		{
+#ifdef PRINTF_DEBUG
 			int candidate_index = 0;
+#endif
 			for(auto& plate_image : plate_candidates)
 			{
 				std::string plate_number_as_text;
 				int confidence;
 
+#ifdef PRINTF_DEBUG
 				std::ostringstream filename_stream;
 			    filename_stream << "plate_candidate_" << strategy_index << "_" << candidate_index++ << ".png";
-
 				cv::imwrite(filename_stream.str(), plate_image);
+#endif
 				if(try_execute_ocr(plate_image, plate_number_as_text, confidence) && confidence >= confidence_threshold)
 				{
 					if(!value_exists(plate_number_as_text, parsed_numbers_by_confidence))
@@ -85,30 +89,12 @@ bool plate_recognizer::try_parse(
 				plate_number_as_text = "";
 				confidence = 0;
 			}
+#ifdef PRINTF_DEBUG
 			strategy_index++;
-			if(!parsed_numbers_by_confidence.empty())
-				return true;
-		}
-#else
-		if(strategy->try_find_and_crop_plate_number(image, plate_candidates))			
-		{
-			for(auto& plate_image : plate_candidates)
-			{
-				std::string plate_number_as_text;
-				int confidence;
-				if(try_execute_ocr(plate_image, plate_number_as_text, confidence) && confidence >= confidence_threshold)
-				{
-					parsed_numbers_by_confidence.insert(std::make_pair(confidence, plate_number_as_text));
-				}
-
-				plate_number_as_text = "";
-				confidence = 0;
-			}
-
-			if(!parsed_numbers_by_confidence.empty())
-				return true;
-		}
 #endif
+			if(!parsed_numbers_by_confidence.empty())
+				return true;
+		}
 	}
 
 	return false;
