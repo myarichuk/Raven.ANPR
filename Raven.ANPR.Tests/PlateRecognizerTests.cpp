@@ -72,6 +72,45 @@ BOOST_AUTO_TEST_CASE(can_recognize_plate5)
 	BOOST_CHECK_EQUAL(license_number, "OMG77");
 }
 
+BOOST_AUTO_TEST_CASE(can_recognize_plate6)
+{
+	std::multimap<int, std::string, std::greater<int>> results;
+	BOOST_CHECK_EQUAL(true, recognizer->try_parse("test_license_plate6.jpg", results));
+	BOOST_CHECK(!results.empty());
+
+	if(!results.empty())
+	{
+		const auto license_number = results.begin()->second;
+		BOOST_CHECK_EQUAL(license_number, "3112113");
+	}
+}
+
+BOOST_AUTO_TEST_CASE(can_recognize_plate7)
+{
+	std::multimap<int, std::string, std::greater<int>> results;
+	BOOST_CHECK_EQUAL(true, recognizer->try_parse("test_license_plate7.jpg", results));
+	BOOST_CHECK(!results.empty());
+
+	if(!results.empty())
+	{
+		const auto license_number = results.begin()->second;
+		BOOST_CHECK_EQUAL(license_number, "7029207");
+	}
+}
+
+BOOST_AUTO_TEST_CASE(can_recognize_plate8)
+{
+	std::multimap<int, std::string, std::greater<int>> results;
+	BOOST_CHECK_EQUAL(true, recognizer->try_parse("test_license_plate8.jpg", results));
+	BOOST_CHECK(!results.empty());
+
+	if(!results.empty())
+	{
+		const auto license_number = results.begin()->second;
+		BOOST_CHECK_EQUAL(license_number, "25125102");
+	}
+}
+
 BOOST_AUTO_TEST_CASE(can_recognize_missing_plate)
 {
 	std::multimap<int, std::string, std::greater<int>> results;
@@ -84,7 +123,6 @@ BOOST_AUTO_TEST_CASE(should_throw_if_image_invalid)
 {
 	std::string license_number;
 	auto image = cv::imread("test_license_plate_invalid.jpg");
-	auto _ = finally([&] { image.release(); }); //make sure to release memory after usage...
 	std::multimap<int, std::string, std::greater<int>> results;
 	BOOST_CHECK_THROW(recognizer->try_parse(image, results), std::exception); 
 }

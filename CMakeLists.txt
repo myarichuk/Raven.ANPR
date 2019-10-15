@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required (VERSION 3.13)
 project (Raven.ANPR VERSION 0.0.1 LANGUAGES C CXX)
 include (CTest)
-
+ 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -12,7 +12,7 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")	
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif(MSVC)
- 
+
 list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
  
 if(NOT DEFINED ARCH)
@@ -133,7 +133,7 @@ ExternalProject_Add(RavenDBCppClient
   UPDATE_COMMAND "" 
   INSTALL_COMMAND ""  
 )
- 
+
 ExternalProject_Get_property(RavenDBCppClient BINARY_DIR)
 ExternalProject_Get_property(RavenDBCppClient SOURCE_DIR)
  

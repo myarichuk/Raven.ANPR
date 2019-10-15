@@ -1,5 +1,4 @@
 #include "plate_recognizer.h"
-#include "finally.hpp"
 #include <regex>
 
 void plate_recognizer::throw_if_invalid(const cv::Mat& image)
@@ -22,7 +21,7 @@ bool plate_recognizer::try_execute_ocr(cv::Mat& plate_image, std::string& result
 	const std::regex allowed_chars("[A-Za-z0-9]");
 	result.reserve(tmp.size());
 
-	for(char& c : tmp)
+	for(auto& c : tmp)
 	{
 		auto current = std::string({ c });
 		if(std::regex_match(current, allowed_chars))
@@ -37,10 +36,7 @@ bool plate_recognizer::try_parse(
 	std::multimap<int, std::string, std::greater<int>>& parsed_numbers_by_confidence,
 	int confidence_threshold)
 {
-	auto image = cv::imread(image_path);
-	auto _ = finally([&] { image.release(); }); //make sure to release memory after usage...
-
-	return try_parse(image, parsed_numbers_by_confidence);
+	return try_parse(cv::imread(image_path), parsed_numbers_by_confidence);
 }
 
 bool plate_recognizer::try_parse(
@@ -139,10 +135,12 @@ plate_recognizer::plate_recognizer(const std::vector<std::shared_ptr<base_plate_
 	//by default, the directory is 'tessdata' and it should contain files like 'eng.traineddata' per each language that is used with it.
 	//without the directory and some training files, tesseract api will fail to initialize
 	if (ocr_api.Init(nullptr, "eng") == -1)
-	{
 		throw std::exception("Failed to initialize tesseract");
-	}
 
-	ocr_api.SetVariable("confidence", "1");
-	ocr_api.SetVariable("matcher_bad_match_pad", "0.25");
+	ocr_api.SetPageSegMode(tesseract::PageSegMode::PSM_SINGLE_WORD);
+	
+	//ocr_api.SetVariable("tessedit_char_whitelist", "BCDFGHJKLMNPQRSTVWXYZ0123456789-");
+    ocr_api.SetVariable("language_model_penalty_non_freq_dict_word", "1");
+    ocr_api.SetVariable("language_model_penalty_non_dict_word ", "1");
+    ocr_api.SetVariable("load_system_dawg", "0");
 }
