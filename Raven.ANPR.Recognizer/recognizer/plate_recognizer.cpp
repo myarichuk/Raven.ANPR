@@ -134,13 +134,17 @@ plate_recognizer::plate_recognizer(const std::vector<std::shared_ptr<base_plate_
 	//note: tesseract requires data directory for it to work properly where the executable works
 	//by default, the directory is 'tessdata' and it should contain files like 'eng.traineddata' per each language that is used with it.
 	//without the directory and some training files, tesseract api will fail to initialize
-	if (ocr_api.Init(nullptr, "eng") == -1)
+
+	ocr_api.SetVariable("load_system_dawg", "0");
+	ocr_api.SetVariable("load_freq_dawg", "0");
+	ocr_api.SetVariable("load_punc_dawg", "0");
+	ocr_api.SetVariable("load_number_dawg", "0");
+	ocr_api.SetVariable("load_unambig_dawg", "0");
+	ocr_api.SetVariable("load_bigram_dawg", "0");
+	ocr_api.SetVariable("load_fixed_length_dawgs", "0");
+
+	if (ocr_api.Init(nullptr, "eng", tesseract::OEM_TESSERACT_LSTM_COMBINED) == -1)
 		throw std::exception("Failed to initialize tesseract");
 
 	ocr_api.SetPageSegMode(tesseract::PageSegMode::PSM_SINGLE_WORD);
-	
-	//ocr_api.SetVariable("tessedit_char_whitelist", "BCDFGHJKLMNPQRSTVWXYZ0123456789-");
-    ocr_api.SetVariable("language_model_penalty_non_freq_dict_word", "1");
-    ocr_api.SetVariable("language_model_penalty_non_dict_word ", "1");
-    ocr_api.SetVariable("load_system_dawg", "0");
 }

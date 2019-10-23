@@ -80,8 +80,15 @@ BOOST_AUTO_TEST_CASE(can_recognize_plate6)
 
 	if(!results.empty())
 	{
-		const auto license_number = results.begin()->second;
-		BOOST_CHECK_EQUAL(license_number, "3112113");
+		for(const auto& kvp : results)
+		{
+			const auto license_number =kvp.second;
+			
+			if(license_number == "3112113")
+				return;
+		}
+
+		BOOST_FAIL("Haven't found any variants with proper license number");	
 	}
 }
 
@@ -93,8 +100,15 @@ BOOST_AUTO_TEST_CASE(can_recognize_plate7)
 
 	if(!results.empty())
 	{
-		const auto license_number = results.begin()->second;
-		BOOST_CHECK_EQUAL(license_number, "7029207");
+		for(const auto& kvp : results)
+		{
+			const auto license_number =kvp.second;
+			
+			if(license_number == "7029207")
+				return;
+		}
+
+		BOOST_FAIL("Haven't found any variants with proper license number");	
 	}
 }
 

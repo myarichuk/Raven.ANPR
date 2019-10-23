@@ -6,6 +6,7 @@
 #include "if_char.hpp"
 #include <corecrt_math_defines.h>
 #include "possible_plate.hpp"
+#include "plate_finder_by_rectangle.hpp"
 
 //credit: code adapted with some changes from https://github.com/Link009/LPEX 
 class plate_finder_by_geometry final : public base_plate_finder_strategy
@@ -121,7 +122,7 @@ public:
 			return maybe_char.bounding_rect.area() > 80 &&
 				maybe_char.bounding_rect.width > 2 &&
 				maybe_char.bounding_rect.height > 8 &&
-				(0.25 < maybe_char.aspect_ratio() < 1.05);
+				(0.35 < maybe_char.aspect_ratio() < 1.05);
 		};
 
 		for(const auto& contour : contours)
@@ -155,7 +156,7 @@ public:
 
 			//in this case ignore because there is not enough characters for a license plate
 			//TODO: make this configurable? I think more than 3 characters in license plate makes sense, but who knows...
-			if(list_of_matching_chars.size() < 3) 
+			if(list_of_matching_chars.size() < 3)
 				continue;
 
 			list_of_list_of_matching_chars.push_back(list_of_matching_chars);
@@ -178,9 +179,7 @@ public:
 		cv::warpAffine(image, rotated, rotation_matrix, cv::Size(image.rows, image.cols));
 
 		//crop the image to suspected license plate boundaries
-		//also crop 15% at the edges to reduce visual artifacts that sometimes happen after warpAffine 
-		//- those can cause turn artifacts and false positives in OCR
-		const auto cropped_size = cv::Size(plate.width * 0.85, plate.height * 0.85);
+		const auto cropped_size = cv::Size(plate.width, plate.height);
 		cv::getRectSubPix(rotated, cropped_size, plate.center, cropped);
 	}
 
@@ -198,13 +197,14 @@ public:
 		//obviously, if we didn't find sequences in second pass, we have nothing to do
 		if(list_of_list_of_matching_chars.empty()) 
 			return false;
-
+		int num = 1;
 		for(const auto& list_of_matching_chars : list_of_list_of_matching_chars)
 		{
 			cv::Mat result;
 			//now that we have sequences of shapes that *could* represent license plate,
 			//we crop original image to include those sequences and treat them as candidates for license plates.
 			crop_plate_candidate(image, list_of_matching_chars, result);
+
 
 			//just in case, this shouldn't be true
 			if(result.data == nullptr ||
@@ -215,6 +215,10 @@ public:
 			//adjust color palette so tesseract OCR will have less issues
 			//(without this, the possibility of false positives is MUCH higher)
 			cv::cvtColor(result, result, cv::COLOR_BGR2RGBA); //without this Tesseract will fail it's OCR
+			std::stringstream xyz;
+			xyz << "cropped_" << num++ << ".png";
+			auto filename = xyz.str();
+			cv::imwrite(filename, result);
 
 			results.push_back(result);
 		}

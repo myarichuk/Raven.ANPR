@@ -1,10 +1,11 @@
-FROM balenalib/raspberrypi3
+FROM balenalib/raspberrypi3-dotnet
 
 RUN apt-get update && apt-get install -y \
 	apt-transport-https \
     build-essential \
     gcc \
 	g++ \
+	gcc-arm-linux-gnueabihf \
 	cmake \
 	ninja-build \
     curl \
